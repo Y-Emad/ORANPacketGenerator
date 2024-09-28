@@ -25,16 +25,16 @@ $(GENERATOR): $(GENERATOR_SRC)
 
 # Rule for PacketParser
 $(PARSER): $(PARSER_SRC)
-#	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(PARSER) $(PARSER_SRC)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(PARSER) $(PARSER_SRC)
 
 # Rule to run the PacketGenerator and PacketParser
 run: all
 	if exist oran_packet.bin del oran_packet.bin  # Windows delete command
 	./$(GENERATOR)
-#	./$(PARSER)
+	./$(PARSER)
 
 # Clean up the generated files (Windows-specific)
 clean:
 	if exist $(GENERATOR).exe del $(GENERATOR).exe
-#	if exist $(PARSER).exe del $(PARSER).exe
+	if exist $(PARSER).exe del $(PARSER).exe
 	if exist oran_packet.bin del oran_packet.bin

@@ -45,7 +45,7 @@ void printPayload(const std::vector<unsigned char>& data, int start, int length)
 
 int main() {
     // Open the .bin file in binary mode
-    std::ifstream infile("ethernet_packet.bin", std::ios::binary);
+    std::ifstream infile("oran_packet.bin", std::ios::binary);
     if (!infile) {
         std::cerr << "Error opening file!" << std::endl;
         return 1;
