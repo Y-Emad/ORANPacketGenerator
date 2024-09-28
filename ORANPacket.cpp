@@ -138,8 +138,10 @@ void ORANPacket::set_ORAN_numPrbu(int numPrbu) {
 
 
 // Setter for ORAN Payload
-void ORANPacket::setPayload(const unsigned char* payload_data) {
-    memcpy(payload, payload_data, payload_size);
+void ORANPacket::setPayload(vector<signed char> payload_data, int strPrbu, int numPrbu) {
+    memcpy(payload, payload_data.data() + strPrbu, numPrbu*12*2);
+
+    // Call the CRC function after payload is filled
     this->applyCRC();
 }
 
@@ -220,7 +222,9 @@ void generatePacket(
     unsigned char* src_mac,
     int slots,
     int StartNRB,
-    int NRBPerPacket) {
+    int NRBPerPacket,
+    vector<signed char> iq_samples
+    ) {
     ORANPacket packet(packet_size, slots);
 
     packet.setDestinationMAC(dest_mac);
@@ -230,9 +234,8 @@ void generatePacket(
     packet.set_ORAN_strPrbu(StartNRB);
 
     packet.set_ORAN_numPrbu(NRBPerPacket);
-
-    unsigned char payload[packet.payload_size] = {0};
-    packet.setPayload(payload);
+    
+    packet.setPayload(iq_samples, StartNRB, NRBPerPacket);
 
     packet.dumpToFile("oran_packet.bin");
 }
@@ -250,4 +253,31 @@ int findSlots(int SCS) {
         default:
             return 16;
     }    
+}
+
+// Function to read IQ samples from a file and return them as a single array
+vector<signed char> Read_IQs(const string& filename) {
+    ifstream file(filename);
+    if (!file) {
+        cerr << "Unable to open file: " << filename << endl;
+        return {};
+    }
+
+    vector<signed char> iq_samples;
+    string line;
+
+    while (getline(file, line)) {
+        istringstream iss(line);
+        int i_sample, q_sample;
+
+        // Read two integers from each line (I and Q samples)
+        if (iss >> i_sample >> q_sample) {
+            iq_samples.push_back(static_cast<signed char>(i_sample)); // I sample
+            iq_samples.push_back(static_cast<signed char>(q_sample)); // Q sample
+        }
+    }
+
+    // Close the file
+    file.close();
+    return iq_samples;
 }

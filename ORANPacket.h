@@ -5,12 +5,13 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <fstream>
+#include <fstream>  // file printing
+#include <sstream>  // file reading
 #include <iomanip>
 #include <cstring>
 #include <string>
 #include <stdint.h>
-#include <cmath> // for ceil()
+#include <cmath>    // ceil()
 
 using namespace std;
 
@@ -90,7 +91,7 @@ public:
     void set_ORAN_numPrbu(int numPrbu);
 
     // ORAN Payload
-    void setPayload(const unsigned char* payload_data);
+    void setPayload(vector<signed char> payload_data, int strPrbu, int numPrbu);
 
     // Ethernet CRC
     void applyCRC();
@@ -117,6 +118,8 @@ void generatePacket(
     unsigned char* src_mac,
     int slots,
     int StartNRB,
-    int NRBPerPacket);
+    int NRBPerPacket,
+    vector<signed char> iq_samples);
 int findSlots(int SCS);
+vector<signed char> Read_IQs(const string& filename);
 #endif

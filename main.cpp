@@ -8,7 +8,7 @@ int ORANPacket::slot = 0;
 int ORANPacket::symbol = 0;
 
 int main() {
-    int packet_size = 752; // in Bytes
+    int packet_size = 1500; // in Bytes
     unsigned char* dest_mac = StrToArr("0x010101010101");
     unsigned char*  src_mac = StrToArr("0x333333333333");
     int minIFG = 12; // Number of IFGs at packet end
@@ -20,8 +20,10 @@ int main() {
     int MaxNrb = 273;       // Total NRBs to be sent
     int NrbPerPacket = 30;  // Number of 12 IQ Samples per packet
 
-    string PayloadType = "random";  // Fixed means read from file
+    string PayloadType = "Fixed";   // Fixed means read from file, Random can be old data in memory
     string Payload = "iq_file.txt"; // File to read from
+    vector<signed char> iq_samples; // Random data from memory
+    if (PayloadType == "Fixed") iq_samples = Read_IQs(Payload); // Read IQ samples from .txt
 
     // Packets Properties
     int slots = findSlots(SCS);
@@ -42,7 +44,7 @@ int main() {
                     NrbPerPacket = lastPacketNRBs;
                 generatePacket(
                     packet_size, dest_mac, src_mac,
-                    slots, StartNRB, NrbPerPacket
+                    slots, StartNRB, NrbPerPacket, iq_samples
                 );
                 StartNRB += NrbPerPacket;
                 genIFG(minIFG, "oran_packet.bin");
