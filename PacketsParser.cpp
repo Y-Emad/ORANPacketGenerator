@@ -2,7 +2,9 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-#include <algorithm> // for std::remove_if
+#include <algorithm> // for remove_if
+
+using namespace std;
 
 // Function to convert a hex character (ASCII) to its integer equivalent
 int hexCharToInt(unsigned char c) {
@@ -16,50 +18,50 @@ int hexCharToInt(unsigned char c) {
     return -1;  // Error case for invalid hex digit
 }
 
-void printUnparsed(const std::vector<unsigned char>& data) {
-    std::cout << std::dec << std::endl;
+void printUnparsed(const vector<unsigned char>& data) {
+    cout << endl;
     for (size_t i = 0; i < data.size(); i++) {
-        if ( (i)%8 == 0) std::cout << std::endl;
-        else if ( (i)%2 == 0) std::cout << " ";
-        std::cout << std::hex << (unsigned char)data[i];
+        if ( (i)%8 == 0) cout << endl;
+        else if ( (i)%2 == 0) cout << " ";
+        cout << hex << (unsigned char)data[i];
     }
-    std::cout << std::dec << std::endl;
+    cout << dec << endl;
 }
 
-void printHex(const std::vector<unsigned char>& data, int start, int length) {
-    std::cout << "0x";
+void printHex(const vector<unsigned char>& data, int start, int length) {
+    cout << "0x";
     for (int i = start; i < start + length; i++) {
-        std::cout << std::hex << (unsigned char)data[i];
+        cout << hex << (unsigned char)data[i];
     }
-    std::cout << std::dec << std::endl;
+    cout << endl;
 }
 
-void printPayload(const std::vector<unsigned char>& data, int start, int length) {
-    std::cout << "0x";
+void printPayload(const vector<unsigned char>& data, int start, int length) {
     for (int i = start; i < start + length; i++) {
-        if ( (i)%2 == 0) std::cout << " ";
-        std::cout << std::hex << (unsigned char)data[i];
+        if (i%4 == 0) cout << "\n            ";
+        if (i%2 == 0) cout << " ";
+        cout << hex << (signed char)data[i];
     }
-    std::cout << std::dec << std::endl;
+    cout << endl;
 }
 
 int main() {
     // Open the .bin file in binary mode
-    std::ifstream infile("oran_packet.bin", std::ios::binary);
+    ifstream infile("oran_packet.bin", ios::binary);
     if (!infile) {
-        std::cerr << "Error opening file!" << std::endl;
+        cerr << "Error opening file!" << endl;
         return 1;
     }
 
     // Read the file contents into a vector
-    std::vector<unsigned char> fileData((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    vector<unsigned char> fileData((istreambuf_iterator<char>(infile)), istreambuf_iterator<char>());
 
     // Close the file
     infile.close();
 
     // Remove spaces and newline characters
     fileData.erase(
-        std::remove_if(fileData.begin(), fileData.end(), [](unsigned char c) {
+        remove_if(fileData.begin(), fileData.end(), [](unsigned char c) {
             return c == ' ' || c == '\n';  // Remove spaces and newlines
         }),
         fileData.end()
@@ -68,12 +70,33 @@ int main() {
     // Print the original shape of the file
     // printUnparsed(fileData);
 
-    const int PREAMBLE_SIZE = 8*2;
-    const int DEST_SIZE = 6*2;
-    const int SRC_SIZE = 6*2;
-    const int LEN_SIZE = 2*2;
-    const int CRC_SIZE = 4*2;
-    const int HEADER_SIZE = PREAMBLE_SIZE + DEST_SIZE + SRC_SIZE + LEN_SIZE;
+    const int PREAMBLE = 8*2;
+    const int DEST = 6*2;
+    const int SRC = 6*2;
+    const int LEN = 2*2;
+    const int ETH_HEADER = PREAMBLE + DEST + SRC + LEN;
+
+    const int ECPRI_VRC = 1*2;
+    const int ECPRI_MSG = 1*2;
+    const int ECPRI_PAY = 2*2;
+    const int ECPRI_RPC = 2*2;
+    const int ECPRI_SEQ = 2*2;
+    const int ECPRI_HEADER = ECPRI_VRC+ECPRI_MSG+ECPRI_PAY+ECPRI_RPC+ECPRI_SEQ;
+
+    const int ORAN_DVI = 1*2;
+    const int ORAN_FID = 1*2;
+    const int ORAN_SSS = 2*2;
+    const int ORAN_HEADER = ORAN_DVI+ORAN_DVI+ORAN_SSS;
+
+    const int ORAN_SID = 1*2;
+    const int ORAN_IGN = 1*2;
+    const int ORAN_strPRB = 1*2;
+    const int ORAN_numPRB = 1*2;
+    const int ORAN_SECTION = ORAN_SID+ORAN_IGN+ORAN_strPRB+ORAN_numPRB;
+
+    const int FULL_HEADERS = ETH_HEADER + ECPRI_HEADER + ORAN_HEADER + ORAN_SECTION;
+
+    const int CRC = 4*2;
 
     size_t i = 0;
     while (i < fileData.size()) {
@@ -85,60 +108,129 @@ int main() {
             continue;
         }
 
-        // Extract the Ethernet frame fields (preamble can be skipped)
-        if (i + HEADER_SIZE <= fileData.size()) {
+        // Extract the Ethernet Packet Fields (preamble can be skipped)
+        if (i + ETH_HEADER <= fileData.size()) {
             // Skip the preamble (8 bytes)
-            i += PREAMBLE_SIZE;
+            cout << "   > ETHERNET HEADER <" << endl;
+            i += PREAMBLE;
 
             // Destination address (6 bytes)
-            std::cout << "Destin: ";
-            printHex(fileData, i, DEST_SIZE);
-            i += DEST_SIZE;
+            cout << "Destination: ";
+            printHex(fileData, i, DEST);
+            i += DEST;
 
             // Source address (6 bytes)
-            std::cout << "Source: ";
-            printHex(fileData, i, SRC_SIZE);
-            i += SRC_SIZE;
+            cout << "     Source: ";
+            printHex(fileData, i, SRC);
+            i += SRC;
 
-            // Length field (2 bytes)
-            // Convert length from bytes to integer
+            // Length field (2 bytes) - Convert length from bytes to integer
             int length = (hexCharToInt(fileData[i])  << 12) |   // Shift the first nibble by 12 bits
                         (hexCharToInt(fileData[i+1]) << 8) |   // Shift the second nibble by 8 bits
                         (hexCharToInt(fileData[i+2]) << 4) |   // Shift the third nibble by 4 bits
                         hexCharToInt(fileData[i+3]);           // No shift for the fourth nibble
-            std::cout << "Length: " << length << " or ";
-            printHex(fileData, i, LEN_SIZE);
-            i += LEN_SIZE;
+            cout << "     Length: " << length << " or ";
+            printHex(fileData, i, LEN);
+            i += LEN;
+
+            // Start of eCPRI Header
+            cout << endl << "      > ECPRI HEADER <" << endl;
+
+            // Version, Reserved, Concatenation
+            cout << "        VRC: ";
+            printHex(fileData, i, ECPRI_VRC);
+            i += ECPRI_VRC;
+
+            // Message
+            cout << "    Message: ";
+            printHex(fileData, i, ECPRI_MSG);
+            i += ECPRI_MSG;
+
+            // Payload Size
+            cout << "    Payload: ";
+            printHex(fileData, i, ECPRI_PAY);
+            i += ECPRI_PAY;
+
+            // RtcId / PcId
+            cout << " RtcId/PcId: ";
+            printHex(fileData, i, ECPRI_RPC);
+            i += ECPRI_RPC;
+
+            // Sequence Id
+            cout << "      SeqId: ";
+            printHex(fileData, i, ECPRI_SEQ);
+            i += ECPRI_SEQ;
+
+            // Start of ORAN Header
+            cout << endl << "       > ORAN HEADER <" << endl;
+
+            // data Direction, payloadVersion, filterIndex
+            cout << "        DVI: ";
+            printHex(fileData, i, ORAN_DVI);
+            i += ORAN_DVI;
+
+            // Frame Id
+            cout << "      Frame: ";
+            printHex(fileData, i, ORAN_FID);
+            i += ORAN_FID;
+
+            // subframe, slot, symbol
+            cout << "        SSS: ";
+            printHex(fileData, i, ORAN_SSS);
+            i += ORAN_SSS;
+
+            // Start of ORAN Section
+            cout << endl << "       > ORAN SECTION <" << endl;
+
+            // Section Id
+            cout << "        SID: ";
+            printHex(fileData, i, ORAN_SID);
+            i += ORAN_SID;
+
+            // Ignored
+            cout << "    Ignored: ";
+            printHex(fileData, i, ORAN_IGN);
+            i += ORAN_IGN;
+
+            // subframe, slot, symbol
+            cout << "  Start PRB: ";
+            printHex(fileData, i, ORAN_strPRB);
+            i += ORAN_strPRB;
+
+            // subframe, slot, symbol
+            cout << " PRB Number: ";
+            printHex(fileData, i, ORAN_numPRB);
+            i += ORAN_numPRB;
 
             // Calculate payload size
-            int payloadSize = length*2 - (HEADER_SIZE + CRC_SIZE);
+            int payloadSize = length*2 - (FULL_HEADERS + CRC);
 
             // Extract and print payload
-            std::cout << "Payload: ";
+            cout << endl << "    Payload: ";
             if (i + payloadSize <= fileData.size()) {
                 printPayload(fileData, i, payloadSize);
                 i += payloadSize;
             } else {
-                std::cout << "Incomplete payload (file truncated)." << std::endl;
+                cout << "Incomplete payload (file truncated)." << endl;
                 break;
             }
 
             // CRC (4 bytes)
-            std::cout << "CRC: ";
-            printHex(fileData, i, CRC_SIZE);
-            i += CRC_SIZE;
+            cout << "CRC: ";
+            printHex(fileData, i, CRC);
+            i += CRC;
 
-            std::cout << "---------------------------------" << std::endl;
+            cout << "---------------------------------" << endl;
         } else {
             // If the remaining data is too short to form a full Ethernet frame, we stop
-            std::cout << "Incomplete packet data, stopping parsing." << std::endl;
+            cout << "Incomplete packet data, stopping parsing." << endl;
             break;
         }
     }
 
 
     // Stop program from closing
-    std::cout << "Press any key to continue...";
-    std::cin.get();     // Consume the newline character
+    cout << "Press any key to continue...";
+    cin.get();     // Consume the newline character
     return 0;
 }
