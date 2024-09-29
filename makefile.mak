@@ -29,12 +29,14 @@ $(PARSER): $(PARSER_SRC)
 
 # Rule to run the PacketGenerator and PacketParser
 run:
-	if exist oran_packet.bin del oran_packet.bin  # Windows delete command
+	if exist oran_packet.bin del oran_packet.bin
+	if exist oran_packet_parsed.txt del oran_packet_parsed.txt
 	$(GENERATOR).exe
-	$(PARSER).exe > oran_packet_parsed.txt
+	cmd /c oran_packet_parse.bat
 
 # Clean up the generated files (Windows-specific)
 clean:
 	if exist $(GENERATOR).exe del $(GENERATOR).exe
 	if exist $(PARSER).exe del $(PARSER).exe
 	if exist oran_packet.bin del oran_packet.bin
+	if exist oran_packet_parsed.txt del oran_packet_parsed.txt

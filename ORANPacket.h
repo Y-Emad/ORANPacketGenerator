@@ -48,6 +48,29 @@ struct Headers {
 
 };
 
+// Define structs for configuration data
+struct EthConfig {
+    int LineRate;
+    int CaptureSizeMs;
+    int MinNumOfIFGsPerPacket;
+    string DestAddress;
+    string SourceAddress;
+    int MaxPacketSize;
+};
+
+struct OranConfig {
+    int SCS;
+    int MaxNrb;
+    int NrbPerPacket;
+    string PayloadType;
+    string Payload;
+};
+
+struct PacketConfig {
+    EthConfig eth;
+    OranConfig oran;
+};
+
 // Class for ORAN Packet
 class ORANPacket {
 public:
@@ -110,8 +133,11 @@ private:
 
 // Additional Functions
 void genIFG(int minIFG, const char* filename);
+
 unsigned char* StrToArr(const std::string& hexString);
+
 uint32_t crc32(uint32_t crc, const void *buf, size_t len);
+
 void generatePacket(
     int packet_size,
     unsigned char* dest_mac,
@@ -120,6 +146,11 @@ void generatePacket(
     int StartNRB,
     int NRBPerPacket,
     vector<signed char> iq_samples);
+
 int findSlots(int SCS);
 vector<signed char> Read_IQs(const string& filename);
+
+string trim(const string& str);
+bool parseConfig(const string& filePath, PacketConfig &config);
+
 #endif

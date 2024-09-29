@@ -281,3 +281,63 @@ vector<signed char> Read_IQs(const string& filename) {
     file.close();
     return iq_samples;
 }
+
+// Function to trim whitespace from start and end of a string
+string trim(const string& str) {
+    size_t first = str.find_first_not_of(' ');
+    size_t last = str.find_last_not_of(' ');
+    return (first == string::npos || last == string::npos) ? "" : str.substr(first, last - first + 1);
+}
+
+// Function to parse the config file and assign values to given struct
+// It returns 'true' if parsing was successful, 'false' otherwise
+bool parseConfig(const string& filePath, PacketConfig &config) {
+    ifstream file(filePath);
+
+    if (!file.is_open()) {
+        // File couldn't be opened, return false to indicate failure
+        cerr << "Error: Unable to open file " << filePath << endl;
+        return false;
+    }
+
+    string line, section;
+
+    while (getline(file, line)) {
+        line = trim(line);
+
+        // Ignore empty lines or comments (assuming comments start with a semicolon ';')
+        if (line.empty() || line[0] == ';')
+            continue;
+
+        // Check for section (e.g., [Eth])
+        if (line[0] == '[' && line[line.size() - 1] == ']') {
+            section = line.substr(1, line.size() - 2); // Remove [ and ]
+        } else {
+            // Split the line into key and value
+            size_t equalSignPos = line.find('=');
+            if (equalSignPos != string::npos) {
+                string key = trim(line.substr(0, equalSignPos));
+                string value = trim(line.substr(equalSignPos + 1));
+
+                // Populate the struct based on the section and key
+                if (section == "Eth") {
+                    if (key == "LineRate") config.eth.LineRate = stoi(value);
+                    else if (key == "CaptureSizeMs") config.eth.CaptureSizeMs = stoi(value);
+                    else if (key == "MinNumOfIFGsPerPacket") config.eth.MinNumOfIFGsPerPacket = stoi(value);
+                    else if (key == "DestAddress") config.eth.DestAddress = value;
+                    else if (key == "SourceAddress") config.eth.SourceAddress = value;
+                    else if (key == "MaxPacketSize") config.eth.MaxPacketSize = stoi(value);
+                } else if (section == "Oran") {
+                    if (key == "SCS") config.oran.SCS = stoi(value);
+                    else if (key == "MaxNrb") config.oran.MaxNrb = stoi(value);
+                    else if (key == "NrbPerPacket") config.oran.NrbPerPacket = stoi(value);
+                    else if (key == "PayloadType") config.oran.PayloadType = value;
+                    else if (key == "Payload") config.oran.Payload = value;
+                }
+            }
+        }
+    }
+
+    file.close();
+    return true;  // Parsing was successful
+}
