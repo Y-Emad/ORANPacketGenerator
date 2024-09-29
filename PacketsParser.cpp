@@ -227,10 +227,6 @@ int main() {
             break;
         }
     }
-
-
-    // Stop program from closing
-    cout << "Press any key to continue...";
-    cin.get();     // Consume the newline character
+    
     return 0;
 }
