@@ -2,15 +2,13 @@
 ## This is the Second Milestone of my Final Project in the 5G Diploma offered by SIEMENS EDA.
 
 1) Use PacketConfig.ini file to modify packet parameters
-2) If you modified any parameters, recompile the PacketGenerator.exe using:
-```bash
-g++ -o PacketGenerator main.cpp ORANPacket.cpp
-```
-3) Generate Packets: Run PacketGenerator.exe
-4) Parse Packets: Run oran_packet_parse.bat
-5) Read parsed packets from oran_packet_parsed.txt
+2) Generate Packets: Run PacketGenerator.exe
+3) Parse Packets: Run oran_packet_parse.bat
+4) Read parsed packets from oran_packet_parsed.txt
 
-Steps 2 to 4 can be automated using makefile
+## If you changed the code, you can automate the generation process using makefile.
+Be sure to have [g++](https://gcc.gnu.org/) and [Make](https://gnuwin32.sourceforge.net/packages/make.htm) installed.
+
 ### 1. Navigate to the Project Directory
 Use **PowerShell** or the **Terminal** to navigate to your project directory:
 ```bash
@@ -36,5 +34,8 @@ make clean
 ```
 
 
-### Additional Information
-- Ensure you have the necessary tools installed (like `g++` and `make`).
+## Compiling without Makefile
+```bash
+g++ -o PacketGenerator main.cpp ORANPacket.cpp
+g++ -o PacketParser PacketsParser.cpp
+```
